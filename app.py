@@ -14,7 +14,7 @@ logging.config.dictConfig({
             'class': 'logging.FileHandler',
             'level': 'DEBUG',
             'formatter': 'full',
-            'filename': 'debug.log',
+            'filename': 'logs/debug.log',
         },
 
     },
