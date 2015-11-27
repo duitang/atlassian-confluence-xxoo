@@ -45,8 +45,8 @@ def load_pages():
         return json.loads(pages_file.read())
 
 
-def dump_page(page_meta):
-    page_id = page_meta['id']
+def dump_page(page_id):
+    page_id = page_id
     page = confluence_api.getPage(page_id)
     with open(os.path.join(DATA_DIR, 'pages', page_id + '.json'), 'w') as page_file:
         page_file.write(json.dumps(utils.format_value(page)))
@@ -59,13 +59,41 @@ def dump_pages():
     fail_count = 0
     for page in ordered_pages:
         try:
-            dump_page(page)
+            dump_page(page['id'])
         except Exception as e:
             logger.debug(e)
             fail_count += 1
             continue
         time.sleep(0.1)
         success_count += 1
-        logger.info('s/f/t: %d/%d/%d' % (success_count, fail_count, success_count + fail_count))
-    logger.info('s/f/t: %d/%d/%d' % (success_count, fail_count, success_count + fail_count))
+        logger.info('dump pages, s/f/t: %d/%d/%d' % (
+            success_count, fail_count, success_count + fail_count))
+    logger.info('dump pages, s/f/t: %d/%d/%d' % (
+        success_count, fail_count, success_count + fail_count))
+
+
+def dump_comments_for_page(page_id):
+    comments = confluence_api.getComments(page_id)
+    with open(os.path.join(DATA_DIR, 'comments', page_id + '.json'), 'w') as comments_file:
+        comments_file.write(json.dumps(utils.format_value(comments)))
+
+
+def dump_comments():
+    pages = load_pages()
+    ordered_pages = sort_pages(pages)
+    success_count = 0
+    fail_count = 0
+    for page in ordered_pages:
+        try:
+            dump_comments_for_page(page['id'])
+        except Exception as e:
+            logger.debug(e)
+            fail_count += 1
+            continue
+        time.sleep(0.01)
+        success_count += 1
+        logger.info('dump comments, page: %s, s/f/t: %d/%d/%d' % (
+            page['id'], success_count, fail_count, success_count + fail_count))
+    logger.info('dump comments, s/f/t: %d/%d/%d' % (
+        success_count, fail_count, success_count + fail_count))
 

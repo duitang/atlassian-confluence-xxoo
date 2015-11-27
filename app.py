@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('action', choices=[
-        'dump_page_list', 'dump_pages',
+        'dump_page_list', 'dump_pages', 'dump_comments',
         'test', 'shell',
     ])
     args = parser.parse_args()
@@ -82,7 +82,8 @@ if __name__ == '__main__':
         exporter.dump_page_list()
     elif args.action == 'dump_pages':
         exporter.dump_pages()  # too long
-        pass
+    elif args.action == 'dump_comments':
+        exporter.dump_comments()  # too long
     elif args.action == 'test':
         test()
     else:
