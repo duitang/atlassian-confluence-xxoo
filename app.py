@@ -2,6 +2,8 @@
 
 import logging
 import logging.config
+import importer
+
 logging.config.dictConfig({
     'version': 1,
     'handlers': {
@@ -38,8 +40,9 @@ logging.config.dictConfig({
 })
 import argparse
 
-from api import confluence_api
+from api import old_confluence_api, new_confluence_api
 import exporter
+import utils
 
 
 logger = logging.getLogger(__name__)
@@ -47,24 +50,35 @@ logger = logging.getLogger(__name__)
 
 
 def shell():
-    confluence_api.getServerInfo()
-    confluence_api.getSpaces()
-    confluence_api.getSpace('duitang')
-    confluence_api.getPage('425988')
-    confluence_api.getPageHistory('425988')
-    confluence_api.getAttachments('425988')
-    confluence_api.getAttachments('3572309')
-    confluence_api.getChildren('425988')
-    confluence_api.getComments('425988')
+    old_confluence_api.getServerInfo()
+    old_confluence_api.getSpaces()
+    old_confluence_api.getSpace('duitang')
+    old_confluence_api.getPage('425988')
+    old_confluence_api.getPageHistory('425988')
+    old_confluence_api.getAttachments('425988')
+    old_confluence_api.getAttachments('3572309')
+    old_confluence_api.getChildren('425988')
+    old_confluence_api.getComments('425988')
 
     import IPython
     IPython.embed()
 
 
 def test():
-    pages = exporter.load_pages()
-    ordered_pages = exporter.sort_pages(pages)
-    exporter.dump_page(ordered_pages[0])
+    pages = utils.load_pages()
+    ordered_pages = utils.sort_pages(pages)
+    page = ordered_pages[4]
+    old_parent_id_title = dict([(x['id'], x['title']) for x in pages])
+    if not page['parentId'] in old_parent_id_title and not page['parentId'] == '0':
+        logger.error('No old parent, title: %s, old page id: %s' % (page['title'],
+                                                                    page['parentId']))
+        return
+    if page['parentId'] == '0':
+        new_parent_id = '0'
+    else:
+        new_parent_id = new_confluence_api.getPage('DT', old_parent_id_title[page['parentId']])
+    logger.info(page)
+    importer.import_page(page['id'], new_parent_id)
 
 
 if __name__ == '__main__':
@@ -77,7 +91,7 @@ if __name__ == '__main__':
     ])
     args = parser.parse_args()
 
-    logger.info('Server info: %s' % confluence_api.getServerInfo())
+    logger.info('Server info: %s' % old_confluence_api.getServerInfo())
 
     if args.action == 'dump_page_list':
         exporter.dump_page_list()
@@ -87,6 +101,8 @@ if __name__ == '__main__':
         exporter.dump_comments()  # too long
     elif args.action == 'dump_attachments':
         exporter.dump_attachments()
+    elif args.action == 'import_pages':
+        pass
     elif args.action == 'test':
         test()
     else:
