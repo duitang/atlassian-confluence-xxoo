@@ -67,7 +67,9 @@ def shell():
 def test():
     pages = utils.load_pages()
     ordered_pages = utils.sort_pages(pages)
-    importer.import_comments_for_page('4358169')
+    exporter.dump_page('2983876')
+    exporter.dump_page('12648563')
+    importer.import_page('12648563', '2983876')
 
 
 if __name__ == '__main__':
