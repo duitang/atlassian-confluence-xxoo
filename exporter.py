@@ -35,7 +35,7 @@ def batch_dump(name, func):
         try:
             func(page['id'])
         except Exception as e:
-            logger.debug(e)
+            logger.error('dump %s fail, page id: %s' % (name, page['id']))
             fail_count += 1
             raise e
         time.sleep(0.1)
