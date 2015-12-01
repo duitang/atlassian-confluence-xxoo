@@ -45,31 +45,32 @@ def import_page(page_id, parent_id):
 
     with open(json_file_path, 'r') as page_file:
         page = json.loads(page_file.read())
-        content = u"""{info}\n本文档从旧 Wiki 导入，原 URL：%s\n\n原创建人：%s %s\n\n原最后更新人：%s %s\n{info}\n\n""" % (
+        prefix = u"""{info}\n本文档从旧 Wiki 导入，原 URL：%s\n\n原创建人：%s %s\n\n原最后更新人：%s %s\n{info}\n\n""" % (
             page['url'],
             page['creator'],
             dateutil.parser.parse(page['created']).strftime('%Y-%m-%d %H:%M:%S'),
             page['modifier'],
             dateutil.parser.parse(page['modified']).strftime('%Y-%m-%d %H:%M:%S'),
-        ) + page['content']
+        )
+        content = prefix + page['content']
         logger.debug('convert page: %s, size: %d' % (page_id, len(content)))
         try:
             new_store_format = new_confluence_api.convertWikiToStorageFormat(content)
         except xmlrpc.client.Fault as e:
-            if ('com.atlassian.confluence.content.render.xhtml.migration.exceptions'
-               '.UnknownMacroMigrationException:' in e.faultString):
-                new_store_format = content
+            if ('com.atlassian.confluence.content.render.xhtml.migration.exceptions.UnknownMacroMigrationException:'
+                in e.faultString) or ('com.ctc.wstx.exc.WstxParsingException' in e.faultString):
+                new_store_format = new_confluence_api.convertWikiToStorageFormat(
+                    prefix + '{code}\n' + page['content'].replace('{code}', r'\{code\}') +
+                    '\n{code}')
                 logger.error('cannot format convert, ignore, page id: %s, page title: %s' % (
                     page['id'], page['title']))
             else:
                 raise e
         new_confluence_api.storePage({
-            #'id': page['id'],
             'space': NEW_SPACE_KEY,
             'parentId': parent_id,
             'title': page['title'],
             'content': new_store_format,
-            # 'creator': page['creator'],
             'modified': page['modified'],
         })
 
@@ -79,7 +80,13 @@ def import_pages():
     ordered_pages = utils.sort_pages(pages)
     success_count = 0
     fail_count = 0
+    #skip_to_id = None
+    skip_to_id = '3571839'
     for page in ordered_pages:
+        if skip_to_id:
+            if page['id'] != skip_to_id:
+                skip_to_id = None
+                continue
         try:
             old_parent_id_title = dict([(x['id'], x['title']) for x in pages])
             if not page['parentId'] in old_parent_id_title and not page['parentId'] == '0':
