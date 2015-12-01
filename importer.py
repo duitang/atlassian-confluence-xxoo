@@ -173,3 +173,6 @@ def import_attachments_for_page(page_id):
                     attachment['creator'],
                 ),
             }, attachment_bin)
+
+def import_attachments():
+    batch_import('attachments', import_attachments_for_page)
