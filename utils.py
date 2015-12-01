@@ -5,6 +5,7 @@ from datetime import date, datetime
 import xmlrpc.client
 from decimal import Decimal
 import os
+import re
 
 import dateutil.parser
 import treelib
@@ -65,3 +66,5 @@ def load_pages():
         return json.loads(pages_file.read())
 
 
+def add_prefix_to_traceback(e):
+    return re.sub('^', '! ', str(e))

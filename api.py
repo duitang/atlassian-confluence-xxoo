@@ -22,6 +22,7 @@ class ConfluenceAPI(object):
         cli_c = getattr(self._cli, 'confluence1')
         return functools.partial(getattr(cli_c, name), self._token)
 
+
 class Confluence2API(object):
 
     def __init__(self, base_url, username, password):

@@ -2,14 +2,13 @@
 
 import logging
 import logging.config
-import importer
 
 logging.config.dictConfig({
     'version': 1,
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'level': 'INFO',
+            'level': 'DEBUG',
             'formatter': 'default',
         },
         'debug': {
@@ -35,11 +34,12 @@ logging.config.dictConfig({
     },
     'root': {
         'handlers': ['console', 'debug'],
-        'level': 'INFO'
+        'level': 'DEBUG'
     },
 })
 import argparse
 
+import importer
 from api import old_confluence_api, new_confluence_api
 import exporter
 import utils
@@ -67,26 +67,14 @@ def shell():
 def test():
     pages = utils.load_pages()
     ordered_pages = utils.sort_pages(pages)
-    page = ordered_pages[4]
-    old_parent_id_title = dict([(x['id'], x['title']) for x in pages])
-    if not page['parentId'] in old_parent_id_title and not page['parentId'] == '0':
-        logger.error('No old parent, title: %s, old page id: %s' % (page['title'],
-                                                                    page['parentId']))
-        return
-    if page['parentId'] == '0':
-        new_parent_id = '0'
-    else:
-        new_parent_id = new_confluence_api.getPage('DT', old_parent_id_title[page['parentId']])
-    logger.info(page)
-    importer.import_page(page['id'], new_parent_id)
+    import IPython
+    IPython.embed()
 
 
 if __name__ == '__main__':
-    logger.info('XXX')
-
     parser = argparse.ArgumentParser()
     parser.add_argument('action', choices=[
-        'dump_page_list', 'dump_pages', 'dump_comments', 'dump_attachments',
+        'dump_page_list', 'dump_pages', 'dump_comments', 'dump_attachments', 'import_pages',
         'test', 'shell',
     ])
     args = parser.parse_args()
@@ -102,7 +90,7 @@ if __name__ == '__main__':
     elif args.action == 'dump_attachments':
         exporter.dump_attachments()
     elif args.action == 'import_pages':
-        pass
+        importer.import_pages()
     elif args.action == 'test':
         test()
     else:
