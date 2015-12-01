@@ -58,7 +58,7 @@ def import_page(page_id, parent_id):
             new_store_format = new_confluence_api.convertWikiToStorageFormat(content)
         except xmlrpc.client.Fault as e:
             if ('com.atlassian.confluence.content.render.xhtml.migration.exceptions.UnknownMacroMigrationException:'
-                in e.faultString) or ('com.ctc.wstx.exc.WstxParsingException' in e.faultString):
+                in e.faultString):
                 new_store_format = new_confluence_api.convertWikiToStorageFormat(
                     prefix + '{code}\n' + page['content'].replace('{code}', r'\{code\}') +
                     '\n{code}')
@@ -66,13 +66,30 @@ def import_page(page_id, parent_id):
                     page['id'], page['title']))
             else:
                 raise e
-        new_confluence_api.storePage({
-            'space': NEW_SPACE_KEY,
-            'parentId': parent_id,
-            'title': page['title'],
-            'content': new_store_format,
-            'modified': page['modified'],
-        })
+        try:
+            new_confluence_api.storePage({
+                'space': NEW_SPACE_KEY,
+                'parentId': parent_id,
+                'title': page['title'],
+                'content': new_store_format,
+                'modified': page['modified'],
+            })
+        except xmlrpc.client.Fault as e:
+            if ('com.ctc.wstx.exc.WstxParsingException' in e.faultString):
+                new_store_format = new_confluence_api.convertWikiToStorageFormat(
+                    prefix + '{code}\n' + page['content'].replace('{code}', r'\{code\}') +
+                    '\n{code}')
+                logger.error('cannot insert convert, ignore, page id: %s, page title: %s' % (
+                    page['id'], page['title']))
+                new_confluence_api.storePage({
+                    'space': NEW_SPACE_KEY,
+                    'parentId': parent_id,
+                    'title': page['title'],
+                    'content': new_store_format,
+                    'modified': page['modified'],
+                })
+            else:
+                raise e
 
 
 def import_pages():
@@ -84,14 +101,15 @@ def import_pages():
     skip_to_id = '3571839'
     for page in ordered_pages:
         if skip_to_id:
-            if page['id'] != skip_to_id:
+            if page['id'] == skip_to_id:
                 skip_to_id = None
+            else:
                 continue
         try:
             old_parent_id_title = dict([(x['id'], x['title']) for x in pages])
             if not page['parentId'] in old_parent_id_title and not page['parentId'] == '0':
-                logger.error('No old parent, title: %s, old page id: %s' % (page['title'],
-                                                                            page['parentId']))
+                logger.error('No old parent, title: %s, old page id: %s' % (
+                    page['title'], page['parentId']))
                 return
             if page['parentId'] == '0':
                 new_parent_id = '0'
