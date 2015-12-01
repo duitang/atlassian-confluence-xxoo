@@ -19,6 +19,8 @@ NEW_SPACE_KEY = 'T2'
 
 def find_page_title_to_page_id(pages, page_id):
     old_parent_id_title = dict([(x['id'], x['title']) for x in pages])
+    if page_id not in old_parent_id_title:
+        raise ValueError('cannot locate %s' % (page_id))
     try:
         new_parent_id = new_confluence_api.getPage(NEW_SPACE_KEY, old_parent_id_title[
             page_id])['id']
@@ -108,12 +110,11 @@ def import_pages():
     ordered_pages = utils.sort_pages(pages)
     success_count = 0
     fail_count = 0
-    #skip_to_id = None
-    skip_to_id = '3571839'
+    SKIP_TO_ID = None
     for page in ordered_pages:
-        if skip_to_id:
-            if page['id'] == skip_to_id:
-                skip_to_id = None
+        if SKIP_TO_ID is not None:
+            if page['id'] == SKIP_TO_ID:
+                SKIP_TO_ID = None
             else:
                 continue
         try:
@@ -126,12 +127,11 @@ def import_pages():
                 new_parent_id = '0'
             else:
                 try:
-                    new_parent_id = find_page_title_to_page_id(page['title'])
+                    new_parent_id = find_page_title_to_page_id(pages, page['parentId'])
                     # new_parent_id = new_confluence_api.getPage(NEW_SPACE_KEY, old_parent_id_title[
                     #     page['parentId']])['id']
                 except Exception as e:
-                    raise ValueError('cannot locate %s, e: %s' % (
-                        old_parent_id_title[page['parentId']], e))
+                    raise ValueError('cannot locate %s, e: %s' % (page['id'], e))
             import_page(page['id'], new_parent_id)
         except xmlrpc.client.Fault as e:
             if ('Transaction rolled back because it has been marked as rollback-only' in
