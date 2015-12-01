@@ -14,7 +14,7 @@ import utils
 
 logger = logging.getLogger(__name__)
 
-NEW_SPACE_KEY = 'T2'
+NEW_SPACE_KEY = 'T3'
 
 
 def find_page_title_to_page_id(pages, page_id):
