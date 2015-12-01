@@ -17,6 +17,17 @@ logger = logging.getLogger(__name__)
 NEW_SPACE_KEY = 'T2'
 
 
+def find_page_title_to_page_id(pages, page_id):
+    old_parent_id_title = dict([(x['id'], x['title']) for x in pages])
+    try:
+        new_parent_id = new_confluence_api.getPage(NEW_SPACE_KEY, old_parent_id_title[
+            page_id])['id']
+    except Exception as e:
+        raise ValueError('cannot locate %s, e: %s' % (
+            old_parent_id_title[page_id], e))
+    return new_parent_id
+
+
 def batch_import(name, func, *args, **kwargs):
     pages = utils.load_pages()
     ordered_pages = utils.sort_pages(pages)
@@ -115,8 +126,9 @@ def import_pages():
                 new_parent_id = '0'
             else:
                 try:
-                    new_parent_id = new_confluence_api.getPage(NEW_SPACE_KEY, old_parent_id_title[
-                        page['parentId']])['id']
+                    new_parent_id = find_page_title_to_page_id(page['title'])
+                    # new_parent_id = new_confluence_api.getPage(NEW_SPACE_KEY, old_parent_id_title[
+                    #     page['parentId']])['id']
                 except Exception as e:
                     raise ValueError('cannot locate %s, e: %s' % (
                         old_parent_id_title[page['parentId']], e))
@@ -137,3 +149,27 @@ def import_pages():
             success_count + fail_count))
     logger.info('import %s, s/f/t: %d/%d/%d' % (
         'page', success_count, fail_count, success_count + fail_count))
+
+
+def import_attachments_for_page(page_id):
+    json_file_path = os.path.join(utils.DATA_DIR, 'attachments', page_id + '.json')
+    pages = utils.load_pages()
+    if not os.path.isfile(json_file_path):
+        logger.debug('no file %s' % json_file_path)
+        return
+    with open(json_file_path, 'r') as attachment_file:
+        attachments = json.loads(attachment_file.read())
+
+    for attachment in attachments:
+        with open(os.path.join(utils.DATA_DIR, 'attachments', page_id + '_contents', attachment['id']),
+                  'rb') as content_file:
+            attachment_bin = content_file.read()
+            new_confluence_api.addAttachment(find_page_title_to_page_id(
+                pages, attachment['pageId']), {
+                'fileName': attachment['fileName'],
+                'contentType': attachment['contentType'],
+                'comment': attachment['comment'] + ' | 导入日：%s，原作者： %s' % (
+                    dateutil.parser.parse(attachment['created']).strftime('%Y-%m-%d %H:%M:%S'),
+                    attachment['creator'],
+                ),
+            }, attachment_bin)

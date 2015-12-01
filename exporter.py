@@ -54,7 +54,7 @@ def dump_comments_for_page(page_id):
     comments = old_confluence_api.getComments(page_id)
     if len(comments) == 0:
         return
-    with open(os.path.join(DATA_DIR, 'comments', page_id + '.json'), 'w') as comments_file:
+    with open(os.path.join(utils.DATA_DIR, 'comments', page_id + '.json'), 'w') as comments_file:
         comments_file.write(json.dumps(utils.format_value(comments)))
 
 
@@ -66,13 +66,13 @@ def dump_attachments_for_page(page_id):
     attachments = old_confluence_api.getAttachments(page_id)
     if len(attachments) == 0:
         return
-    with open(os.path.join(DATA_DIR, 'attachments', page_id + '.json'), 'w') as attachment_file:
+    with open(os.path.join(utils.DATA_DIR, 'attachments', page_id + '.json'), 'w') as attachment_file:
         attachment_file.write(json.dumps(utils.format_value(attachments)))
 
-    if not os.path.exists(os.path.join(DATA_DIR, 'attachments', page_id + '_contents')):
-        os.mkdir(os.path.join(DATA_DIR, 'attachments', page_id + '_contents'))
+    if not os.path.exists(os.path.join(utils.DATA_DIR, 'attachments', page_id + '_contents')):
+        os.mkdir(os.path.join(utils.DATA_DIR, 'attachments', page_id + '_contents'))
     for attachment in attachments:
-        with open(os.path.join(DATA_DIR, 'attachments', page_id + '_contents', attachment['id']),
+        with open(os.path.join(utils.DATA_DIR, 'attachments', page_id + '_contents', attachment['id']),
                   'wb') as content_file:
             content_file.write(old_confluence_api.getAttachmentData(page_id, attachment['fileName'], '0').data)
 

@@ -67,8 +67,7 @@ def shell():
 def test():
     pages = utils.load_pages()
     ordered_pages = utils.sort_pages(pages)
-    import IPython
-    IPython.embed()
+    importer.import_attachments_for_page('12911154')
 
 
 if __name__ == '__main__':
