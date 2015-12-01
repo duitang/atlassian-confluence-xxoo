@@ -50,6 +50,21 @@ def batch_import(name, func, *args, **kwargs):
         name, success_count, fail_count, success_count + fail_count))
 
 
+def fetch_convert_content(prefix, content):
+    content = prefix + content
+    try:
+        new_store_format = new_confluence_api.convertWikiToStorageFormat(content)
+    except xmlrpc.client.Fault as e:
+        if ('com.atlassian.confluence.content.render.xhtml.migration.exceptions.UnknownMacroMigrationException:'
+            in e.faultString):
+            new_store_format = new_confluence_api.convertWikiToStorageFormat(
+                prefix + '{code}\n' + content.replace('{code}', r'\{code\}') +
+                '\n{code}')
+        else:
+            raise e
+    return new_store_format
+
+
 def import_page(page_id, parent_id):
     json_file_path = os.path.join(utils.DATA_DIR, 'pages', page_id + '.json')
     if not os.path.isfile(json_file_path):
@@ -65,20 +80,8 @@ def import_page(page_id, parent_id):
             page['modifier'],
             dateutil.parser.parse(page['modified']).strftime('%Y-%m-%d %H:%M:%S'),
         )
-        content = prefix + page['content']
-        logger.debug('convert page: %s, size: %d' % (page_id, len(content)))
-        try:
-            new_store_format = new_confluence_api.convertWikiToStorageFormat(content)
-        except xmlrpc.client.Fault as e:
-            if ('com.atlassian.confluence.content.render.xhtml.migration.exceptions.UnknownMacroMigrationException:'
-                in e.faultString):
-                new_store_format = new_confluence_api.convertWikiToStorageFormat(
-                    prefix + '{code}\n' + page['content'].replace('{code}', r'\{code\}') +
-                    '\n{code}')
-                logger.error('cannot format convert, ignore, page id: %s, page title: %s' % (
-                    page['id'], page['title']))
-            else:
-                raise e
+        new_store_format = fetch_convert_content(prefix, page['content'])
+        logger.debug('convert page: %s, size: %d' % (page_id, len(page['content'])))
         try:
             new_confluence_api.storePage({
                 'space': NEW_SPACE_KEY,
@@ -173,6 +176,34 @@ def import_attachments_for_page(page_id):
                     attachment['creator'],
                 ),
             }, attachment_bin)
+
+
+def import_comments_for_page(page_id):
+    json_file_path = os.path.join(utils.DATA_DIR, 'comments', page_id + '.json')
+    if not os.path.isfile(json_file_path):
+        logger.debug('no file %s' % json_file_path)
+        return
+    with open(os.path.join(utils.DATA_DIR, 'comments', page_id + '.json'), 'r') as comments_file:
+        comments = json.loads(comments_file.read())
+
+    pages = utils.load_pages()
+    for comment in comments:
+        prefix = u"""{info}\n本文档从旧 Wiki 导入，原 URL：%s\n\n原创建人：%s %s\n\n原最后更新人：%s %s\n{info}\n\n""" % (
+            comment['url'],
+            comment['creator'],
+            dateutil.parser.parse(comment['created']).strftime('%Y-%m-%d %H:%M:%S'),
+            comment['modifier'],
+            dateutil.parser.parse(comment['modified']).strftime('%Y-%m-%d %H:%M:%S'),
+        )
+        comment['modified'] = dateutil.parser.parse(comment['modified'])
+        new_confluence_api.addComment({
+            'pageId': find_page_title_to_page_id(pages, comment['pageId']),
+            'title': comment['title'],
+            'content': fetch_convert_content(prefix, comment['content']),
+            'created': dateutil.parser.parse(comment['created']),
+            'creator': comment['creator'],
+        })
+
 
 def import_attachments():
     batch_import('attachments', import_attachments_for_page)

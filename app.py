@@ -67,7 +67,7 @@ def shell():
 def test():
     pages = utils.load_pages()
     ordered_pages = utils.sort_pages(pages)
-    importer.import_attachments_for_page('2983001')
+    importer.import_comments_for_page('4358169')
 
 
 if __name__ == '__main__':
@@ -97,3 +97,4 @@ if __name__ == '__main__':
         test()
     else:
         shell()
+
