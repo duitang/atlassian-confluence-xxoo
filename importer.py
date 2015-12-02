@@ -14,7 +14,7 @@ import utils
 
 logger = logging.getLogger(__name__)
 
-NEW_SPACE_KEY = 'T3'
+NEW_SPACE_KEY = 'DT'
 
 
 def find_page_title_to_page_id(pages, page_id):
@@ -207,3 +207,7 @@ def import_comments_for_page(page_id):
 
 def import_attachments():
     batch_import('attachments', import_attachments_for_page)
+
+
+def import_comments():
+    batch_import('comments', import_comments_for_page)

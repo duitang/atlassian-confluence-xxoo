@@ -67,14 +67,14 @@ def shell():
 def test():
     pages = utils.load_pages()
     ordered_pages = utils.sort_pages(pages)
-    exporter.dump_page('10522246')
+    exporter.dump_page('4358662')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('action', choices=[
         'dump_page_list', 'dump_pages', 'dump_comments', 'dump_attachments', 'import_pages',
-        'import_attachments',
+        'import_attachments', 'import_comments',
         'test', 'shell',
     ])
     args = parser.parse_args()
@@ -93,6 +93,8 @@ if __name__ == '__main__':
         importer.import_pages()
     elif args.action == 'import_attachments':
         importer.import_attachments()
+    elif args.action == 'import_comments':
+        importer.import_comments()
     elif args.action == 'test':
         test()
     else:

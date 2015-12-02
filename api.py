@@ -3,11 +3,11 @@
 import xmlrpc.client
 import functools
 
-BASE_URL = 'http://host/rpc/xmlrpc'
+BASE_URL = 'http://old_ip:8087/rpc/xmlrpc'
 USERNAME = 'username'
 PASSWORD = 'password'
 
-NEW_BASE_URL = 'http://10.1.2.155:8090/rpc/xmlrpc'
+NEW_BASE_URL = 'http://new_ip:8090/rpc/xmlrpc'
 NEW_USERNAME = 'username'
 NEW_PASSWORD = 'password'
 
