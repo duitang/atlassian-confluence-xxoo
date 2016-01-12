@@ -39,17 +39,16 @@ logging.config.dictConfig({
 })
 import argparse
 
-import importer
-from api import old_confluence_api, new_confluence_api
-import exporter
 import utils
-
 
 logger = logging.getLogger(__name__)
 
 
 
 def shell():
+    import importer
+    from api import old_confluence_api, new_confluence_api
+    import exporter
     old_confluence_api.getServerInfo()
     old_confluence_api.getSpaces()
     old_confluence_api.getSpace('duitang')
@@ -65,6 +64,9 @@ def shell():
 
 
 def test():
+    import importer
+    from api import old_confluence_api, new_confluence_api
+    import exporter
     pages = utils.load_pages()
     ordered_pages = utils.sort_pages(pages)
     exporter.dump_page('4358662')
@@ -80,6 +82,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     logger.info('Server info: %s' % old_confluence_api.getServerInfo())
+    import importer
+    import exporter
 
     if args.action == 'dump_page_list':
         exporter.dump_page_list()
