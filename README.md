@@ -12,3 +12,10 @@ Works for 3.x upgrade 5.x.
 mkvirtualenv -p /usr/local/bin/python3.5 atlassian-confluence-xxoo
 pip install -r requirements.txt
 ```
+
+
+## Run
+
+```
+python app.py -h
+```
